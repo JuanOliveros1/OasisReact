@@ -1,3 +1,6 @@
+import React from "react";
+
+
 import { useState } from "react";
 import { MapPin, ZoomIn, ZoomOut, Navigation, FileText, AlertCircle, User } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";

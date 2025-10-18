@@ -1,8 +1,11 @@
+import React from "react";
+
+
 import { useState, useEffect } from "react";
 import { ArrowLeft, Clock, Share2, CheckCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 interface SafeWalkScreenProps {
   onBack: () => void;

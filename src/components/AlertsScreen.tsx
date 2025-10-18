@@ -1,3 +1,6 @@
+import React from "react";
+
+
 import { Bell, AlertTriangle, Info, CheckCircle, Clock, MapPin } from "lucide-react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";

@@ -1,3 +1,6 @@
+import React from "react";
+
+
 import { useState } from "react";
 import { ArrowLeft, Info, MapPin } from "lucide-react";
 import { Card } from "./ui/card";

@@ -1,3 +1,6 @@
+import React from "react";
+
+
 import { useState } from "react";
 import { Toaster } from "./components/ui/sonner";
 import { SplashScreen } from "./components/SplashScreen";

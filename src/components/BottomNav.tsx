@@ -1,3 +1,6 @@
+import React from "react";
+
+
 import { Home, Bell, Map, User } from "lucide-react";
 
 interface BottomNavProps {

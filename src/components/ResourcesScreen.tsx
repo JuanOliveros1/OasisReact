@@ -1,7 +1,10 @@
+import React from "react";
+
+
 import { ArrowLeft, Phone, MessageSquare, Shield, Bus, Heart, Building } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 interface ResourcesScreenProps {
   onBack: () => void;

@@ -1,8 +1,11 @@
+import React from "react";
+
+
 import { User, Bell, Shield, MapPin, Phone, ChevronRight, LogOut } from "lucide-react";
 import { Card } from "./ui/card";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Switch } from "./ui/switch";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 export function ProfileScreen() {
   const menuItems = [

@@ -1,3 +1,6 @@
+import React from "react";
+
+
 import { useState, useRef, useEffect } from "react";
 import { FileText, Users, AlertTriangle, BookOpen, ChevronUp, Bell, Clock } from "lucide-react";
 import { Card } from "./ui/card";
