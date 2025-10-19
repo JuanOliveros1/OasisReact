@@ -240,20 +240,6 @@ export function MapHomeScreen({ onNavigate, onOpenProfile }: MapHomeScreenProps)
         </button>
       </div>
 
-      {/* BOTTOM-RIGHT PANIC BUTTON */}
-      <div className="absolute bottom-32 right-6 z-30">
-        <button
-          onClick={() => alert("Emergency services contacted! This is a demo.")}
-          className="relative group"
-        >
-          <div className="absolute inset-0 bg-red-500 rounded-full blur-xl opacity-50 group-active:opacity-70 transition-opacity"></div>
-          <div className="relative w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-full shadow-2xl flex items-center justify-center border-4 border-white group-active:scale-95 transition-transform">
-            <div className="text-center">
-              <AlertCircle className="w-10 h-10 text-white" />
-            </div>
-          </div>
-        </button>
-      </div>
 
       {/* DRAGGABLE BOTTOM SHEET */}
       <DraggableBottomSheet onNavigate={onNavigate} />
