@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 
 import { User, Bell, Shield, MapPin, Phone, ChevronRight, LogOut } from "lucide-react";
@@ -6,8 +6,17 @@ import { Card } from "./ui/card";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Switch } from "./ui/switch";
 import { toast } from "sonner";
+import { EmergencyContactsScreen } from "./EmergencyContactsScreen";
+import { LocationSharingScreen } from "./LocationSharingScreen";
+import { NotificationSettingsScreen } from "./NotificationSettingsScreen";
+import { PrivacySecurityScreen } from "./PrivacySecurityScreen";
+import { EditProfileScreen } from "./EditProfileScreen";
+
+type ProfileScreenType = "main" | "emergency" | "location" | "notifications" | "privacy" | "edit";
 
 export function ProfileScreen() {
+  const [currentScreen, setCurrentScreen] = useState<ProfileScreenType>("main");
+
   const menuItems = [
     { id: "emergency", label: "Emergency Contacts", icon: Phone },
     { id: "location", label: "Location Sharing", icon: MapPin },
@@ -16,8 +25,33 @@ export function ProfileScreen() {
   ];
 
   const handleMenuClick = (item: string) => {
-    toast.info(`Opening ${item} settings...`);
+    setCurrentScreen(item as ProfileScreenType);
   };
+
+  const handleBack = () => {
+    setCurrentScreen("main");
+  };
+
+  // Render different screens based on current state
+  if (currentScreen === "emergency") {
+    return <EmergencyContactsScreen onBack={handleBack} />;
+  }
+
+  if (currentScreen === "location") {
+    return <LocationSharingScreen onBack={handleBack} />;
+  }
+
+  if (currentScreen === "notifications") {
+    return <NotificationSettingsScreen onBack={handleBack} />;
+  }
+
+  if (currentScreen === "privacy") {
+    return <PrivacySecurityScreen onBack={handleBack} />;
+  }
+
+  if (currentScreen === "edit") {
+    return <EditProfileScreen onBack={handleBack} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -86,7 +120,7 @@ export function ProfileScreen() {
               <Card
                 key={item.id}
                 className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleMenuClick(item.label)}
+                onClick={() => handleMenuClick(item.id)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -106,7 +140,10 @@ export function ProfileScreen() {
         <div className="space-y-3">
           <h3>Account</h3>
           
-          <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+          <Card 
+            className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleMenuClick("edit")}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="bg-gray-100 p-2 rounded-xl">
