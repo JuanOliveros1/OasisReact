@@ -1,8 +1,5 @@
-import React from "react";
-
-
-import { useState, useRef, useEffect } from "react";
-import { FileText, Users, AlertTriangle, BookOpen, ChevronUp, Bell, Clock } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { FileText, Users, AlertTriangle, BookOpen, ChevronUp, Clock } from "lucide-react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 
@@ -11,29 +8,109 @@ interface DraggableBottomSheetProps {
 }
 
 export function DraggableBottomSheet({ onNavigate }: DraggableBottomSheetProps) {
-  const [height, setHeight] = useState(180); // Initial collapsed height
+  const MIN = 180;
+  const TOP_SNAP_MARGIN = 10;   // px near top to auto-latch
+  const UNLATCH_DRAG_PX = 16;   // pull-down needed to unlatch
+
+  const getMax = () => Math.floor(window.innerHeight * 0.9); // ~90% viewport
+  const [maxHeight, setMaxHeight] = useState(getMax());
+  const [height, setHeight] = useState<number>(MIN);
   const [isDragging, setIsDragging] = useState(false);
+  const [latched, setLatched] = useState(false);
+
+  // drag state
   const startY = useRef(0);
   const startHeight = useRef(0);
+  const beganLatched = useRef(false);
+  const handleRef = useRef<HTMLDivElement | null>(null);
 
-  const maxHeight = window.innerHeight * 0.7; // 70% of screen
-  const minHeight = 180;
+  useEffect(() => {
+    const onResize = () => setMaxHeight(getMax());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // ---- Pointer event logic (robust on mobile & desktop) ----
+  useEffect(() => {
+    const h = handleRef.current;
+    if (!h) return;
+
+    const onPointerDown = (e: PointerEvent) => {
+      // Only left click / primary touch
+      if (e.button !== 0 && e.pointerType === "mouse") return;
+
+      beganLatched.current = latched;
+      setIsDragging(true);
+      startY.current = e.clientY;
+      startHeight.current = height;
+
+      // capture the pointer so moves keep coming to us
+      h.setPointerCapture(e.pointerId);
+      // prevent page scroll while dragging
+      e.preventDefault();
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isDragging) return;
+
+      const deltaY = startY.current - e.clientY; // up = positive
+      if (beganLatched.current || latched) {
+        const pulledDown = -deltaY; // positive if dragging down
+        if (pulledDown < UNLATCH_DRAG_PX) {
+          setHeight(maxHeight); // keep pinned
+          return;
+        }
+        // unlatch and continue drag
+        beganLatched.current = false;
+        setLatched(false);
+        startHeight.current = maxHeight;
+      }
+
+      const next = Math.min(Math.max(startHeight.current + deltaY, MIN), maxHeight);
+      setHeight(next);
+      e.preventDefault();
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (!isDragging) return;
+      setIsDragging(false);
+
+      // near top? latch
+      if (maxHeight - height <= TOP_SNAP_MARGIN) {
+        setHeight(maxHeight);
+        setLatched(true);
+      } else {
+        // snap to nearest (min / mid / max)
+        const mid = (MIN + maxHeight) / 2;
+        const targets = [MIN, mid, maxHeight];
+        const nearest = targets.reduce((a, b) =>
+          Math.abs(height - a) < Math.abs(height - b) ? a : b
+        );
+        setHeight(nearest);
+        setLatched(nearest === maxHeight);
+      }
+
+      // release capture
+      try { h.releasePointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
+    };
+
+    h.addEventListener("pointerdown", onPointerDown);
+    h.addEventListener("pointermove", onPointerMove);
+    h.addEventListener("pointerup", onPointerUp);
+    h.addEventListener("pointercancel", onPointerUp);
+    return () => {
+      h.removeEventListener("pointerdown", onPointerDown);
+      h.removeEventListener("pointermove", onPointerMove);
+      h.removeEventListener("pointerup", onPointerUp);
+      h.removeEventListener("pointercancel", onPointerUp);
+    };
+  }, [height, isDragging, latched, maxHeight]);
 
   const recentAlerts = [
-    {
-      id: 1,
-      title: "Suspicious activity near East Garage",
-      time: "15 min ago",
-      severity: "high",
-    },
-    {
-      id: 2,
-      title: "Weather alert: Heavy rain expected",
-      time: "1 hour ago",
-      severity: "medium",
-    },
+    { id: 1, title: "Suspicious activity near East Garage", time: "15 min ago", severity: "high" },
+    { id: 2, title: "Weather alert: Heavy rain expected", time: "1 hour ago", severity: "medium" },
   ];
-
   const quickActions = [
     { id: "report", label: "Report Incident", icon: FileText, color: "bg-blue-500" },
     { id: "safewalk", label: "Safe Walk", icon: Users, color: "bg-green-500" },
@@ -41,83 +118,29 @@ export function DraggableBottomSheet({ onNavigate }: DraggableBottomSheetProps) 
     { id: "resources", label: "Resources", icon: BookOpen, color: "bg-purple-500" },
   ];
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setIsDragging(true);
-    startY.current = e.touches[0].clientY;
-    startHeight.current = height;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    const deltaY = startY.current - e.touches[0].clientY;
-    const newHeight = Math.min(Math.max(startHeight.current + deltaY, minHeight), maxHeight);
-    setHeight(newHeight);
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    // Snap to positions
-    if (height > maxHeight * 0.5) {
-      setHeight(maxHeight);
-    } else if (height < minHeight + 50) {
-      setHeight(minHeight);
-    }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    startY.current = e.clientY;
-    startHeight.current = height;
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
-    const deltaY = startY.current - e.clientY;
-    const newHeight = Math.min(Math.max(startHeight.current + deltaY, minHeight), maxHeight);
-    setHeight(newHeight);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    // Snap to positions
-    if (height > maxHeight * 0.5) {
-      setHeight(maxHeight);
-    } else if (height < minHeight + 50) {
-      setHeight(minHeight);
-    }
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-      return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-      };
-    }
-  }, [isDragging]);
-
   return (
     <div
-      className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transition-all duration-200 z-50"
-      style={{ height: `${height}px` }}
+      className={[
+        "absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-50 select-none pointer-events-auto",
+        // animate only when not dragging
+        isDragging ? "" : "transition-[height] duration-300 ease-out",
+      ].join(" ")}
+      style={{ height }}
     >
-      {/* Drag Handle */}
+      {/* Drag region (bigger than just the pill) */}
       <div
-        className="w-full py-4 cursor-grab active:cursor-grabbing flex justify-center"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
+        ref={handleRef}
+        className="w-full pt-3 pb-2 cursor-grab active:cursor-grabbing flex flex-col items-center gap-2"
+        style={{ touchAction: "none" }} // disables native scrolling during drag
       >
-        <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+        <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        {/* Optional title area acts as part of drag handle to make it easier to grab */}
+        <div className="text-xs text-gray-500">Drag up for alerts & actions</div>
       </div>
 
       {/* Content */}
-      <div className="px-6 pb-6 overflow-y-auto h-full">
-        {/* Expand Indicator */}
-        {height === minHeight && (
+      <div className="px-6 pb-6 overflow-y-auto h-[calc(100%-56px)]">
+        {height === MIN && (
           <div className="flex items-center justify-center mb-4">
             <ChevronUp className="w-5 h-5 text-gray-400 animate-bounce" />
           </div>
@@ -127,10 +150,7 @@ export function DraggableBottomSheet({ onNavigate }: DraggableBottomSheetProps) 
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h3>Recent Alerts</h3>
-            <button
-              onClick={() => onNavigate("alerts")}
-              className="text-sm text-[#0c7f99] hover:underline"
-            >
+            <button onClick={() => onNavigate("alerts")} className="text-sm text-[#0c7f99] hover:underline">
               View All
             </button>
           </div>
@@ -189,8 +209,8 @@ export function DraggableBottomSheet({ onNavigate }: DraggableBottomSheetProps) 
           </div>
         </div>
 
-        {/* Safety Tip - Only visible when expanded */}
-        {height > minHeight + 100 && (
+        {/* Safety Tip */}
+        {height > MIN + 100 && (
           <div className="mt-6">
             <Card className="p-4 bg-gradient-to-r from-[#0c7f99]/10 to-[#1e3a8a]/10 border-[#0c7f99]/20">
               <div className="flex items-start space-x-3">
