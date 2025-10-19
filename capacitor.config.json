@@ -1,0 +1,30 @@
+{
+  "appId": "com.oasis.campussafety",
+  "appName": "Oasis Campus Safety",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#ffffff",
+      "showSpinner": true,
+      "spinnerColor": "#0c7f99"
+    },
+    "StatusBar": {
+      "style": "dark",
+      "backgroundColor": "#0c7f99"
+    },
+    "Geolocation": {
+      "permissions": ["location"]
+    },
+    "Camera": {
+      "permissions": ["camera", "photos"]
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

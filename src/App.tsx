@@ -25,8 +25,7 @@ type Screen =
   | "resources";
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] =
-    useState<Screen>("splash");
+  const [currentScreen, setCurrentScreen] = useState<Screen>("splash");
 
   const handleGetStarted = () => {
     setCurrentScreen("home");
@@ -81,7 +80,8 @@ export default function App() {
     currentScreen !== "splash" &&
     currentScreen !== "report" &&
     currentScreen !== "safewalk" &&
-    currentScreen !== "resources";
+    currentScreen !== "resources" &&
+    currentScreen !== "map";
 
   return (
     <IncidentProvider>
