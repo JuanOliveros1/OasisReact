@@ -1,11 +1,8 @@
-import React from "react";
-
-
-import { useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
+import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import { ArrowLeft, Info, MapPin } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 interface DangerZonesScreenProps {
   onBack: () => void;
@@ -13,13 +10,45 @@ interface DangerZonesScreenProps {
 
 export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
   const [timeFilter, setTimeFilter] = useState("30days");
+  const mapRef = useRef<google.maps.Map | null>(null);
+
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || "",
+  });
+
+  // Map container style
+  const containerStyle = useMemo(
+    () => ({ width: "100%", height: "100%" }),
+    []
+  );
+
+  // UH Campus center
+  const defaultCenter = useMemo<google.maps.LatLngLiteral>(
+    () => ({ lat: 29.7205, lng: -95.3424 }),
+    []
+  );
+
+  const mapOptions = useMemo<google.maps.MapOptions>(
+    () => ({
+      clickableIcons: false,
+      disableDefaultUI: true,
+      zoomControl: false,
+    }),
+    []
+  );
   
-  const dangerZones = [
-    { id: 1, name: "East Parking Garage", risk: "high", incidents: 12 },
-    { id: 2, name: "Science Building Area", risk: "medium", incidents: 5 },
-    { id: 3, name: "Library Back Entrance", risk: "medium", incidents: 7 },
-    { id: 4, name: "Athletic Complex", risk: "low", incidents: 2 },
-  ];
+  const dangerZones = useMemo(() => [
+    { id: 1, name: "East Parking Garage", risk: "high", incidents: 12, lat: 29.7212, lng: -95.3442 },
+    { id: 2, name: "Science Building Area", risk: "medium", incidents: 5, lat: 29.7198, lng: -95.3408 },
+    { id: 3, name: "Library Back Entrance", risk: "medium", incidents: 7, lat: 29.7221, lng: -95.3412 },
+    { id: 4, name: "Athletic Complex", risk: "low", incidents: 2, lat: 29.7235, lng: -95.3384 },
+    { id: 5, name: "Student Center", risk: "high", incidents: 15, lat: 29.7205, lng: -95.3424 },
+    { id: 6, name: "Dormitory A", risk: "medium", incidents: 8, lat: 29.7175, lng: -95.3454 },
+    { id: 7, name: "Business School", risk: "low", incidents: 3, lat: 29.7185, lng: -95.3444 },
+    { id: 8, name: "Engineering Building", risk: "medium", incidents: 6, lat: 29.7225, lng: -95.3404 },
+  ], []);
+
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -38,37 +67,57 @@ export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
       {/* Map Container */}
       <div className="relative">
         <div className="relative h-96 bg-gray-100">
-          <ImageWithFallback
-            src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=600&fit=crop"
-            alt="Campus map"
-            className="w-full h-full object-cover"
-          />
-          
-          {/* Heat markers overlay - semi-transparent zones */}
-          <div className="absolute inset-0">
-            {/* High risk zone */}
-            <div className="absolute top-1/4 left-1/3 w-24 h-24 bg-red-500/30 rounded-full blur-2xl border-2 border-red-500/50"></div>
-            {/* Medium risk zones */}
-            <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-orange-500/30 rounded-full blur-xl border-2 border-orange-500/50"></div>
-            <div className="absolute bottom-1/3 left-1/2 w-20 h-20 bg-orange-500/30 rounded-full blur-xl border-2 border-orange-500/50"></div>
-            {/* Low risk zone */}
-            <div className="absolute top-2/3 right-1/3 w-16 h-16 bg-yellow-500/30 rounded-full blur-lg border-2 border-yellow-500/50"></div>
-          </div>
+          {isLoaded ? (
+            <GoogleMap
+              mapContainerStyle={containerStyle}
+              center={defaultCenter}
+              zoom={15}
+              options={mapOptions}
+              onLoad={(map) => {
+                mapRef.current = map;
+              }}
+              onUnmount={() => {
+                mapRef.current = null;
+              }}
+            >
+              {/* Simple Markers */}
+              {dangerZones.map((zone) => (
+                <MarkerF
+                  key={zone.id}
+                  position={{ lat: zone.lat, lng: zone.lng }}
+                  options={{
+                    icon: {
+                      path: google.maps.SymbolPath.CIRCLE,
+                      scale: zone.risk === 'high' ? 10 : zone.risk === 'medium' ? 8 : 6,
+                      fillColor: zone.risk === 'high' ? '#ef4444' : zone.risk === 'medium' ? '#eab308' : '#22c55e',
+                      fillOpacity: 0.8,
+                      strokeColor: '#ffffff',
+                      strokeWeight: 2
+                    }
+                  }}
+                />
+              ))}
+            </GoogleMap>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+              <div className="text-gray-500">Loading map...</div>
+            </div>
+          )}
           
           {/* Legend */}
           <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm rounded-2xl p-3 shadow-lg">
-            <p className="text-xs mb-2">Risk Level</p>
+            <p className="text-xs mb-2 font-medium">Risk Level</p>
             <div className="space-y-1.5">
               <div className="flex items-center space-x-2 text-xs">
-                <div className="w-4 h-4 bg-gradient-to-r from-green-400 to-yellow-400 rounded-full"></div>
+                <div className="w-4 h-4 bg-green-500 rounded-full"></div>
                 <span>Low</span>
               </div>
               <div className="flex items-center space-x-2 text-xs">
-                <div className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full"></div>
+                <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
                 <span>Medium</span>
               </div>
               <div className="flex items-center space-x-2 text-xs">
-                <div className="w-4 h-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-full"></div>
+                <div className="w-4 h-4 bg-red-500 rounded-full"></div>
                 <span>High</span>
               </div>
             </div>
@@ -100,8 +149,12 @@ export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
       
       {/* Danger Zone List */}
       <div className="px-6 mt-6 space-y-3">
-        <h3>High Risk Areas</h3>
-        {dangerZones.map((zone) => (
+        <h3 className="text-lg font-semibold text-gray-900">
+          Risk Areas ({timeFilter === "30days" ? "Last 30 Days" : "All Time"})
+        </h3>
+        {dangerZones
+          .sort((a, b) => b.incidents - a.incidents) // Sort by incident count
+          .map((zone) => (
           <Card key={zone.id} className="p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3 flex-1">
@@ -109,30 +162,30 @@ export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
                   zone.risk === "high" 
                     ? "bg-red-100"
                     : zone.risk === "medium"
-                    ? "bg-orange-100"
-                    : "bg-yellow-100"
+                    ? "bg-yellow-100"
+                    : "bg-green-100"
                 }`}>
                   <MapPin className={`w-5 h-5 ${
                     zone.risk === "high" 
                       ? "text-red-600"
                       : zone.risk === "medium"
-                      ? "text-orange-600"
-                      : "text-yellow-600"
+                      ? "text-yellow-600"
+                      : "text-green-600"
                   }`} />
                 </div>
                 <div>
-                  <h4>{zone.name}</h4>
+                  <h4 className="font-medium text-gray-900">{zone.name}</h4>
                   <p className="text-sm text-gray-500 mt-1">
                     {zone.incidents} incidents reported
                   </p>
                 </div>
               </div>
-              <div className={`px-3 py-1.5 rounded-full text-xs ${
+              <div className={`px-3 py-1.5 rounded-full text-xs font-medium ${
                 zone.risk === "high" 
                   ? "bg-red-100 text-red-700"
                   : zone.risk === "medium"
-                  ? "bg-orange-100 text-orange-700"
-                  : "bg-yellow-100 text-yellow-700"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-green-100 text-green-700"
               }`}>
                 {zone.risk.toUpperCase()}
               </div>
