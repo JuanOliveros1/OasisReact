@@ -8,6 +8,7 @@ import { Card } from "./ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { toast } from "sonner";
+import { useIncidents } from "../contexts/IncidentContext";
 
 
 interface IncidentReportScreenProps {
@@ -17,7 +18,9 @@ interface IncidentReportScreenProps {
 export function IncidentReportScreen({ onBack }: IncidentReportScreenProps) {
   const [incidentType, setIncidentType] = useState("");
   const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
   const [photoAdded, setPhotoAdded] = useState(false);
+  const { addIncident } = useIncidents();
 
   const handleSubmit = () => {
     if (!incidentType || !description) {
@@ -25,9 +28,22 @@ export function IncidentReportScreen({ onBack }: IncidentReportScreenProps) {
       return;
     }
     
-    toast.success("Report submitted successfully! Campus security has been notified.");
+    // Add incident to context
+    addIncident({
+      type: incidentType,
+      description,
+      reporter: "John Doe", // This would come from user context
+      location: {
+        lat: 29.7205, // This would come from GPS
+        lng: -95.3424,
+        name: location || "University of Houston - Main Campus"
+      },
+      photos: photoAdded ? ["photo1.jpg"] : []
+    });
+    
     setIncidentType("");
     setDescription("");
+    setLocation("");
     setPhotoAdded(false);
     setTimeout(() => onBack(), 1500);
   };
@@ -56,6 +72,7 @@ export function IncidentReportScreen({ onBack }: IncidentReportScreenProps) {
                 <SelectValue placeholder="Select incident type" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="emergency">Emergency</SelectItem>
                 <SelectItem value="theft">Theft</SelectItem>
                 <SelectItem value="harassment">Harassment</SelectItem>
                 <SelectItem value="suspicious">Suspicious Activity</SelectItem>
@@ -77,6 +94,23 @@ export function IncidentReportScreen({ onBack }: IncidentReportScreenProps) {
               rows={6}
               className="resize-none"
             />
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="location" className="block text-sm text-gray-700">
+              Location
+            </label>
+            <input
+              id="location"
+              type="text"
+              placeholder="e.g., Library, Student Center, Parking Garage, etc."
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-500">
+              Optional: Specify where the incident occurred
+            </p>
           </div>
           
           <div className="space-y-2">

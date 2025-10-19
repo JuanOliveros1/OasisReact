@@ -11,11 +11,13 @@ import { LocationSharingScreen } from "./LocationSharingScreen";
 import { NotificationSettingsScreen } from "./NotificationSettingsScreen";
 import { PrivacySecurityScreen } from "./PrivacySecurityScreen";
 import { EditProfileScreen } from "./EditProfileScreen";
+import { useIncidents } from "../contexts/IncidentContext";
 
 type ProfileScreenType = "main" | "emergency" | "location" | "notifications" | "privacy" | "edit";
 
 export function ProfileScreen() {
   const [currentScreen, setCurrentScreen] = useState<ProfileScreenType>("main");
+  const { clearAllData } = useIncidents();
 
   const menuItems = [
     { id: "emergency", label: "Emergency Contacts", icon: Phone },
@@ -168,6 +170,20 @@ export function ProfileScreen() {
               </div>
             </div>
           </Card>
+        </div>
+        
+        {/* Debug Section - Remove in production */}
+        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <h3 className="text-sm font-medium text-yellow-800 mb-2">Debug Tools</h3>
+          <button
+            onClick={clearAllData}
+            className="text-xs bg-yellow-200 text-yellow-800 px-3 py-1 rounded hover:bg-yellow-300 transition-colors"
+          >
+            Clear All Data & Reset
+          </button>
+          <p className="text-xs text-yellow-600 mt-1">
+            This will reset all incidents and alerts to default values
+          </p>
         </div>
         
         {/* App Info */}

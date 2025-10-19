@@ -3,7 +3,7 @@ import React from "react";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMap, MarkerF, OverlayView, useJsApiLoader } from "@react-google-maps/api";
-import { MapPin, ZoomIn, ZoomOut, Navigation, FileText, AlertCircle, User } from "lucide-react";
+import { MapPin, ZoomIn, ZoomOut, Navigation, FileText, AlertCircle, User, Clock, Activity } from "lucide-react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { DraggableBottomSheet } from "./DraggableBottomSheet";
 
@@ -16,13 +16,14 @@ export function MapHomeScreen({ onNavigate, onOpenProfile }: MapHomeScreenProps)
   // User location
   const [position, setPosition] = useState<google.maps.LatLngLiteral | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
 
   // Keep a ref to the map to control zoom/pan from custom buttons
   const mapRef = useRef<google.maps.Map | null>(null);
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string,
+    googleMapsApiKey: (import.meta as any).env.VITE_GOOGLE_MAPS_API_KEY as string,
     // libraries: ["places"],
   });
 
@@ -116,7 +117,7 @@ export function MapHomeScreen({ onNavigate, onOpenProfile }: MapHomeScreenProps)
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-gray-100">
-      {!import.meta.env.VITE_GOOGLE_MAPS_API_KEY && (
+      {!(import.meta as any).env.VITE_GOOGLE_MAPS_API_KEY && (
         <div className="absolute top-2 left-2 z-[1000] text-red-600 bg-white/90 px-3 py-2 rounded-md shadow">
           Missing VITE_GOOGLE_MAPS_API_KEY. Add it to your .env and restart the dev server.
         </div>
@@ -169,11 +170,11 @@ export function MapHomeScreen({ onNavigate, onOpenProfile }: MapHomeScreenProps)
 
             {/* Other users as custom avatar overlays */}
             {userMarkers.map((m) => (
-              <OverlayView
-                key={m.id}
-                position={{ lat: m.lat, lng: m.lng }}
-                mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-              >
+              <React.Fragment key={m.id}>
+                <OverlayView
+                  position={{ lat: m.lat, lng: m.lng }}
+                  mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                >
                 <div className="relative -translate-x-1/2 -translate-y-1/2 group cursor-pointer">
                   <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-75 w-12 h-12"></div>
                   <div className={`relative w-12 h-12 rounded-full border-4 border-white shadow-lg flex items-center justify-center ${m.color}`}>
@@ -183,7 +184,8 @@ export function MapHomeScreen({ onNavigate, onOpenProfile }: MapHomeScreenProps)
                     {m.name}
                   </div>
                 </div>
-              </OverlayView>
+                </OverlayView>
+              </React.Fragment>
             ))}
           </GoogleMap>
         ) : (

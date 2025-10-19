@@ -1,94 +1,78 @@
-import React from "react";
+import React, { useState } from "react";
 
 
-import { Bell, AlertTriangle, Info, CheckCircle, Clock, MapPin } from "lucide-react";
+import { Bell, AlertTriangle, Info, CheckCircle, Clock, MapPin, ChevronDown } from "lucide-react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { useIncidents } from "../contexts/IncidentContext";
 
 interface AlertsScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
 export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
-  const alerts = [
-    {
-      id: 1,
-      title: "Suspicious person near East Parking Garage",
-      description: "Campus police are investigating. Avoid the area if possible.",
-      severity: "high",
-      time: "15 min ago",
-      type: "security",
-      hasLocation: true,
-    },
-    {
-      id: 2,
-      title: "Weather Alert: Heavy Rain Expected",
-      description: "Thunderstorms expected this evening. Plan your commute accordingly.",
-      severity: "medium",
-      time: "1 hour ago",
-      type: "weather",
-      hasLocation: false,
-    },
-    {
-      id: 3,
-      title: "Safe Walk Service Extended Hours",
-      description: "Due to high demand, escort service will operate until 3 AM this week.",
-      severity: "low",
-      time: "3 hours ago",
-      type: "info",
-      hasLocation: false,
-    },
-    {
-      id: 4,
-      title: "All Clear: Library Area Incident Resolved",
-      description: "Campus police have resolved the earlier reported incident.",
-      severity: "resolved",
-      time: "5 hours ago",
-      type: "security",
-      hasLocation: true,
-    },
-    {
-      id: 5,
-      title: "Bike Theft Reported in Stadium Area",
-      description: "Multiple bike thefts reported. Use designated bike racks and locks.",
-      severity: "medium",
-      time: "1 day ago",
-      type: "theft",
-      hasLocation: true,
-    },
-  ];
+  const { alerts, resolveAlert } = useIncidents();
+  const [showAll, setShowAll] = useState(false);
+  
+  // Format time for display
+  const formatTime = (timeString: string) => {
+    const now = new Date();
+    const time = new Date(timeString);
+    const diffMs = now.getTime() - time.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  };
+  
+  const displayedAlerts = showAll ? alerts : alerts.slice(0, 10);
 
-  const getSeverityStyles = (severity: string) => {
+  const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case "high":
-        return {
-          border: "border-l-4 border-l-red-500",
-          badge: "bg-red-100 text-red-700",
-          icon: AlertTriangle,
-          iconColor: "text-red-500",
-        };
+        return <AlertTriangle className="w-5 h-5 text-red-500" />;
       case "medium":
-        return {
-          border: "border-l-4 border-l-orange-500",
-          badge: "bg-orange-100 text-orange-700",
-          icon: Info,
-          iconColor: "text-orange-500",
-        };
+        return <AlertTriangle className="w-5 h-5 text-orange-500" />;
+      case "low":
+        return <Info className="w-5 h-5 text-blue-500" />;
       case "resolved":
-        return {
-          border: "border-l-4 border-l-green-500",
-          badge: "bg-green-100 text-green-700",
-          icon: CheckCircle,
-          iconColor: "text-green-500",
-        };
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
       default:
-        return {
-          border: "border-l-4 border-l-blue-500",
-          badge: "bg-blue-100 text-blue-700",
-          icon: Info,
-          iconColor: "text-blue-500",
-        };
+        return <Bell className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case "high":
+        return "bg-red-100 text-red-700 border-red-200";
+      case "medium":
+        return "bg-orange-100 text-orange-700 border-orange-200";
+      case "low":
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      case "resolved":
+        return "bg-green-100 text-green-700 border-green-200";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200";
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "security":
+        return <AlertTriangle className="w-4 h-4" />;
+      case "weather":
+        return <Info className="w-4 h-4" />;
+      case "theft":
+        return <AlertTriangle className="w-4 h-4" />;
+      case "emergency":
+        return <AlertTriangle className="w-4 h-4" />;
+      default:
+        return <Bell className="w-4 h-4" />;
     }
   };
 
@@ -97,90 +81,136 @@ export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 pt-12 pb-4 px-6 sticky top-0 z-40 backdrop-blur-lg bg-white/95">
         <div className="flex items-center justify-between">
-          <div>
-            <h1>Campus Alerts</h1>
-            <p className="text-gray-500 text-sm mt-1">Stay informed and safe</p>
-          </div>
-          <div className="bg-[#0c7f99]/10 p-3 rounded-full">
-            <Bell className="w-6 h-6 text-[#0c7f99]" />
+          <div className="flex items-center space-x-3">
+            <div className="bg-red-100 p-2 rounded-xl">
+              <Bell className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Campus Alerts</h1>
+              <p className="text-sm text-gray-500">Stay informed about campus safety</p>
+            </div>
           </div>
         </div>
       </div>
-      
-      {/* Active Alerts Counter */}
-      <div className="px-6 mt-6">
-        <Card className="p-4 bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
+
+      {/* Content */}
+      <div className="p-6 space-y-4">
+        {/* Active Alerts Count */}
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="text-red-900">Active Alerts</h4>
-              <p className="text-sm text-red-700 mt-1">
-                2 high priority alerts require attention
+              <h3 className="font-semibold text-gray-900">Active Alerts</h3>
+              <p className="text-sm text-gray-500">
+                {alerts.filter(alert => alert.status === 'active').length} active alerts
               </p>
             </div>
-            <div className="bg-red-500 text-white px-4 py-2 rounded-full min-w-[3rem] text-center">
-              2
+            <div className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">
+              {alerts.filter(alert => alert.status === 'active').length}
             </div>
           </div>
-        </Card>
-      </div>
-      
-      {/* Alerts List */}
-      <div className="px-6 mt-6 space-y-4">
-        {alerts.map((alert) => {
-          const styles = getSeverityStyles(alert.severity);
-          const Icon = styles.icon;
-          
-          return (
-            <Card key={alert.id} className={`p-4 ${styles.border} hover:shadow-md transition-shadow`}>
-              <div className="flex items-start space-x-3">
-                <div className={`${styles.iconColor} mt-1 flex-shrink-0`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h4 className="flex-1">{alert.title}</h4>
-                    <Badge className={styles.badge}>
-                      {alert.severity.toUpperCase()}
-                    </Badge>
+        </div>
+
+        {/* Alerts List */}
+        <div className="space-y-3">
+          {displayedAlerts.map((alert) => (
+            <Card
+              key={alert.id}
+              className={`p-4 border-l-4 ${
+                alert.severity === "high"
+                  ? "border-l-red-500"
+                  : alert.severity === "medium"
+                  ? "border-l-orange-500"
+                  : alert.severity === "low"
+                  ? "border-l-blue-500"
+                  : "border-l-green-500"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start space-x-3 flex-1">
+                  <div className="mt-1">
+                    {getSeverityIcon(alert.severity)}
                   </div>
-                  
-                  <p className="text-sm text-gray-600 mb-3">
-                    {alert.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2 text-xs text-gray-500">
-                      <Clock className="w-3 h-3" />
-                      <span>{alert.time}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="font-semibold text-gray-900 truncate">
+                        {alert.title}
+                      </h3>
+                      <Badge className={getSeverityColor(alert.severity)}>
+                        {alert.severity.toUpperCase()}
+                      </Badge>
                     </div>
-                    
-                    {alert.hasLocation && onNavigate && (
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="text-[#0c7f99] h-auto p-0 text-xs"
-                        onClick={() => onNavigate("home")}
-                      >
-                        <MapPin className="w-3 h-3 mr-1" />
-                        View on map
-                      </Button>
-                    )}
+                    <p className="text-sm text-gray-600 mb-2">
+                      {alert.description}
+                    </p>
+                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                      <div className="flex items-center space-x-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{formatTime(alert.time)}</span>
+                      </div>
+                      {alert.location && (
+                        <div className="flex items-center space-x-1">
+                          <MapPin className="w-3 h-3" />
+                          <span>{alert.location.name}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center space-x-1">
+                        {getTypeIcon(alert.type)}
+                        <span className="capitalize">{alert.type}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+                {alert.status === 'active' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => resolveAlert(alert.id)}
+                    className="text-xs"
+                  >
+                    Mark Resolved
+                  </Button>
+                )}
               </div>
             </Card>
-          );
-        })}
-      </div>
-      
-      {/* Info Footer */}
-      <div className="px-6 mt-6 pb-6">
-        <Card className="p-4 bg-blue-50 border-blue-200">
-          <p className="text-sm text-gray-700">
-            You'll receive push notifications for all high-priority alerts. Update your notification preferences in settings.
-          </p>
-        </Card>
+          ))}
+        </div>
+
+        {/* View More Button */}
+        {alerts.length > 10 && !showAll && (
+          <div className="flex justify-center pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowAll(true)}
+              className="flex items-center space-x-2"
+            >
+              <span>View More Alerts</span>
+              <ChevronDown className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Show Less Button */}
+        {showAll && alerts.length > 10 && (
+          <div className="flex justify-center pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowAll(false)}
+              className="flex items-center space-x-2"
+            >
+              <span>Show Less</span>
+              <ChevronDown className="w-4 h-4 rotate-180" />
+            </Button>
+          </div>
+        )}
+
+        {/* No Alerts Message */}
+        {alerts.length === 0 && (
+          <div className="text-center py-12">
+            <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Alerts</h3>
+            <p className="text-gray-500">All clear! No active alerts at this time.</p>
+          </div>
+        )}
       </div>
     </div>
   );

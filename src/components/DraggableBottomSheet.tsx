@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FileText, Users, AlertTriangle, BookOpen, ChevronUp, Clock } from "lucide-react";
+import { FileText, Users, AlertTriangle, BookOpen, ChevronUp, Clock, Activity } from "lucide-react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
+import { useIncidents } from "../contexts/IncidentContext";
 
 interface DraggableBottomSheetProps {
   onNavigate: (screen: string) => void;
@@ -17,6 +18,9 @@ export function DraggableBottomSheet({ onNavigate }: DraggableBottomSheetProps) 
   const [height, setHeight] = useState<number>(MIN);
   const [isDragging, setIsDragging] = useState(false);
   const [latched, setLatched] = useState(false);
+  
+  // Get recent activities from context
+  const { recentActivities } = useIncidents();
 
   // drag state
   const startY = useRef(0);
@@ -107,10 +111,19 @@ export function DraggableBottomSheet({ onNavigate }: DraggableBottomSheetProps) 
     };
   }, [height, isDragging, latched, maxHeight]);
 
-  const recentAlerts = [
-    { id: 1, title: "Suspicious activity near East Garage", time: "15 min ago", severity: "high" },
-    { id: 2, title: "Weather alert: Heavy rain expected", time: "1 hour ago", severity: "medium" },
-  ];
+  // Format time for display
+  const formatTime = (timeString: string) => {
+    const now = new Date();
+    const time = new Date(timeString);
+    const diffMs = now.getTime() - time.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  };
   const quickActions = [
     { id: "report", label: "Report Incident", icon: FileText, color: "bg-blue-500" },
     { id: "safewalk", label: "Safe Walk", icon: Users, color: "bg-green-500" },
@@ -146,38 +159,62 @@ export function DraggableBottomSheet({ onNavigate }: DraggableBottomSheetProps) 
           </div>
         )}
 
-        {/* Recent Alerts */}
+        {/* Recent Activities */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h3>Recent Alerts</h3>
+            <h3>Recent Activities</h3>
             <button onClick={() => onNavigate("alerts")} className="text-sm text-[#0c7f99] hover:underline">
               View All
             </button>
           </div>
           <div className="space-y-2">
-            {recentAlerts.map((alert) => (
+            {recentActivities.slice(0, 3).map((activity) => (
               <Card
-                key={alert.id}
+                key={activity.id}
                 className={`p-3 border-l-4 ${
-                  alert.severity === "high" ? "border-l-red-500" : "border-l-orange-500"
+                  'severity' in activity && activity.severity === "high" 
+                    ? "border-l-red-500" 
+                    : 'severity' in activity && activity.severity === "medium"
+                    ? "border-l-orange-500"
+                    : "border-l-blue-500"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <p className="text-sm">{alert.title}</p>
-                    <div className="flex items-center space-x-2 mt-1 text-xs text-gray-500">
+                    <div className="flex items-center space-x-2 mb-1">
+                      {'severity' in activity ? (
+                        <AlertTriangle className="w-3 h-3 text-orange-500" />
+                      ) : (
+                        <Activity className="w-3 h-3 text-blue-500" />
+                      )}
+                      <p className="text-sm font-medium">
+                        {'title' in activity ? activity.title : `${activity.type} incident reported`}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-1">
+                      {'description' in activity ? activity.description : activity.description}
+                    </p>
+                    <div className="flex items-center space-x-2 text-xs text-gray-500">
                       <Clock className="w-3 h-3" />
-                      <span>{alert.time}</span>
+                      <span>{formatTime(activity.time)}</span>
+                      {activity.location && activity.location.name && (
+                        <>
+                          <span>•</span>
+                          <span>{activity.location.name}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <Badge
                     className={
-                      alert.severity === "high"
+                      'severity' in activity && activity.severity === "high"
                         ? "bg-red-100 text-red-700"
-                        : "bg-orange-100 text-orange-700"
+                        : 'severity' in activity && activity.severity === "medium"
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-blue-100 text-blue-700"
                     }
                   >
-                    {alert.severity.toUpperCase()}
+                    {'severity' in activity ? activity.severity.toUpperCase() : 'INCIDENT'}
                   </Badge>
                 </div>
               </Card>

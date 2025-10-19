@@ -12,6 +12,7 @@ import { SafeWalkScreen } from "./components/SafeWalkScreen";
 import { ResourcesScreen } from "./components/ResourcesScreen";
 import { AlertsScreen } from "./components/AlertsScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
+import { IncidentProvider } from "./contexts/IncidentContext";
 
 type Screen =
   | "splash"
@@ -84,15 +85,17 @@ export default function App() {
     currentScreen !== "map";
 
   return (
-    <div className="relative min-h-screen max-w-md mx-auto bg-white shadow-2xl overflow-hidden">
-      {renderScreen()}
-      {showBottomNav && (
-        <BottomNav
-          activeTab={currentScreen}
-          onTabChange={handleTabChange}
-        />
-      )}
-      <Toaster position="top-center" />
-    </div>
+    <IncidentProvider>
+      <div className="relative min-h-screen max-w-md mx-auto bg-white shadow-2xl overflow-hidden">
+        {renderScreen()}
+        {showBottomNav && (
+          <BottomNav
+            activeTab={currentScreen}
+            onTabChange={handleTabChange}
+          />
+        )}
+        <Toaster position="top-center" />
+      </div>
+    </IncidentProvider>
   );
 }
