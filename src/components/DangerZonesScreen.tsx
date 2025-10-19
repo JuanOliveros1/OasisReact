@@ -3,13 +3,16 @@ import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import { ArrowLeft, Info, MapPin } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
+import { BottomNav } from "./BottomNav";
 
 interface DangerZonesScreenProps {
   onBack: () => void;
+  onTabChange?: (tab: string) => void;
 }
 
-export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
+export function DangerZonesScreen({ onBack, onTabChange }: DangerZonesScreenProps) {
   const [timeFilter, setTimeFilter] = useState("30days");
+  const [selectedZone, setSelectedZone] = useState<any>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
   const { isLoaded } = useJsApiLoader({
@@ -39,14 +42,78 @@ export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
   );
   
   const dangerZones = useMemo(() => [
-    { id: 1, name: "East Parking Garage", risk: "high", incidents: 12, lat: 29.7212, lng: -95.3442 },
-    { id: 2, name: "Science Building Area", risk: "medium", incidents: 5, lat: 29.7198, lng: -95.3408 },
-    { id: 3, name: "Library Back Entrance", risk: "medium", incidents: 7, lat: 29.7221, lng: -95.3412 },
-    { id: 4, name: "Athletic Complex", risk: "low", incidents: 2, lat: 29.7235, lng: -95.3384 },
-    { id: 5, name: "Student Center", risk: "high", incidents: 15, lat: 29.7205, lng: -95.3424 },
-    { id: 6, name: "Dormitory A", risk: "medium", incidents: 8, lat: 29.7175, lng: -95.3454 },
-    { id: 7, name: "Business School", risk: "low", incidents: 3, lat: 29.7185, lng: -95.3444 },
-    { id: 8, name: "Engineering Building", risk: "medium", incidents: 6, lat: 29.7225, lng: -95.3404 },
+    { 
+      id: 1, 
+      name: "East Parking Garage", 
+      risk: "high", 
+      incidents: 12, 
+      lat: 29.7212, 
+      lng: -95.3442,
+      crimes: ["Theft", "Vandalism", "Assault", "Drug Activity"]
+    },
+    { 
+      id: 2, 
+      name: "Science Building Area", 
+      risk: "medium", 
+      incidents: 5, 
+      lat: 29.7198, 
+      lng: -95.3408,
+      crimes: ["Theft", "Trespassing"]
+    },
+    { 
+      id: 3, 
+      name: "Library Back Entrance", 
+      risk: "medium", 
+      incidents: 7, 
+      lat: 29.7221, 
+      lng: -95.3412,
+      crimes: ["Theft", "Harassment", "Vandalism"]
+    },
+    { 
+      id: 4, 
+      name: "Athletic Complex", 
+      risk: "low", 
+      incidents: 2, 
+      lat: 29.7235, 
+      lng: -95.3384,
+      crimes: ["Trespassing"]
+    },
+    { 
+      id: 5, 
+      name: "Student Center", 
+      risk: "high", 
+      incidents: 15, 
+      lat: 29.7205, 
+      lng: -95.3424,
+      crimes: ["Theft", "Assault", "Drug Activity", "Harassment", "Vandalism"]
+    },
+    { 
+      id: 6, 
+      name: "Dormitory A", 
+      risk: "medium", 
+      incidents: 8, 
+      lat: 29.7175, 
+      lng: -95.3454,
+      crimes: ["Theft", "Harassment", "Trespassing"]
+    },
+    { 
+      id: 7, 
+      name: "Business School", 
+      risk: "low", 
+      incidents: 3, 
+      lat: 29.7185, 
+      lng: -95.3444,
+      crimes: ["Theft", "Trespassing"]
+    },
+    { 
+      id: 8, 
+      name: "Engineering Building", 
+      risk: "medium", 
+      incidents: 6, 
+      lat: 29.7225, 
+      lng: -95.3404,
+      crimes: ["Theft", "Vandalism", "Trespassing"]
+    },
   ], []);
 
 
@@ -80,16 +147,17 @@ export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
                 mapRef.current = null;
               }}
             >
-              {/* Simple Markers */}
+              {/* Clickable Markers */}
               {dangerZones.map((zone) => (
                 <MarkerF
                   key={zone.id}
                   position={{ lat: zone.lat, lng: zone.lng }}
+                  onClick={() => setSelectedZone(zone)}
                   options={{
                     icon: {
                       path: google.maps.SymbolPath.CIRCLE,
                       scale: zone.risk === 'high' ? 10 : zone.risk === 'medium' ? 8 : 6,
-                      fillColor: zone.risk === 'high' ? '#ef4444' : zone.risk === 'medium' ? '#eab308' : '#22c55e',
+                      fillColor: zone.risk === 'high' ? '#ef4444' : zone.risk === 'medium' ? '#f59e0b' : '#22c55e',
                       fillOpacity: 0.8,
                       strokeColor: '#ffffff',
                       strokeWeight: 2
@@ -113,7 +181,7 @@ export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
                 <span>Low</span>
               </div>
               <div className="flex items-center space-x-2 text-xs">
-                <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
+                <div className="w-4 h-4 bg-amber-500 rounded-full"></div>
                 <span>Medium</span>
               </div>
               <div className="flex items-center space-x-2 text-xs">
@@ -162,14 +230,14 @@ export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
                   zone.risk === "high" 
                     ? "bg-red-100"
                     : zone.risk === "medium"
-                    ? "bg-yellow-100"
+                    ? "bg-amber-100"
                     : "bg-green-100"
                 }`}>
                   <MapPin className={`w-5 h-5 ${
                     zone.risk === "high" 
                       ? "text-red-600"
                       : zone.risk === "medium"
-                      ? "text-yellow-600"
+                      ? "text-amber-600"
                       : "text-green-600"
                   }`} />
                 </div>
@@ -184,7 +252,7 @@ export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
                 zone.risk === "high" 
                   ? "bg-red-100 text-red-700"
                   : zone.risk === "medium"
-                  ? "bg-yellow-100 text-yellow-700"
+                  ? "bg-amber-100 text-amber-700"
                   : "bg-green-100 text-green-700"
               }`}>
                 {zone.risk.toUpperCase()}
@@ -194,6 +262,67 @@ export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
         ))}
       </div>
       
+      {/* Crime Details Modal */}
+      {selectedZone && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md bg-white">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{selectedZone.name}</h3>
+                <button 
+                  onClick={() => setSelectedZone(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Risk Level:</span>
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    selectedZone.risk === "high" 
+                      ? "bg-red-100 text-red-700"
+                      : selectedZone.risk === "medium"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-green-100 text-green-700"
+                  }`}>
+                    {selectedZone.risk.toUpperCase()}
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Total Incidents:</span>
+                  <span className="font-medium">{selectedZone.incidents}</span>
+                </div>
+                
+                <div>
+                  <span className="text-sm text-gray-600 block mb-2">Reported Crimes:</span>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedZone.crimes.map((crime: string, index: number) => (
+                      <span 
+                        key={index}
+                        className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md"
+                      >
+                        {crime}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-500">
+                  
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* Info Note */}
       <div className="px-6 mt-6 pb-6">
         <Card className="p-4 bg-blue-50 border-blue-200">
@@ -205,6 +334,14 @@ export function DangerZonesScreen({ onBack }: DangerZonesScreenProps) {
           </div>
         </Card>
       </div>
+
+      {/* Bottom Navigation */}
+      {onTabChange && (
+        <BottomNav 
+          activeTab="map" 
+          onTabChange={onTabChange} 
+        />
+      )}
     </div>
   );
 }
