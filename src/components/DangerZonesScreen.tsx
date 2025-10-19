@@ -3,7 +3,6 @@ import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import { ArrowLeft, Info, MapPin } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { BottomNav } from "./BottomNav";
 
 interface DangerZonesScreenProps {
   onBack: () => void;
@@ -335,13 +334,6 @@ export function DangerZonesScreen({ onBack, onTabChange }: DangerZonesScreenProp
         </Card>
       </div>
 
-      {/* Bottom Navigation */}
-      {onTabChange && (
-        <BottomNav 
-          activeTab="map" 
-          onTabChange={onTabChange} 
-        />
-      )}
     </div>
   );
 }

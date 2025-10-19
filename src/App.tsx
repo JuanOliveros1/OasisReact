@@ -58,7 +58,7 @@ export default function App() {
       case "alerts":
         return <AlertsScreen onNavigate={handleNavigate} />;
       case "map":
-        return <DangerZonesScreen onBack={handleBack} />;
+        return <DangerZonesScreen onBack={handleBack} onTabChange={handleTabChange} />;
       case "profile":
         return <ProfileScreen />;
       case "report":
@@ -81,8 +81,7 @@ export default function App() {
     currentScreen !== "splash" &&
     currentScreen !== "report" &&
     currentScreen !== "safewalk" &&
-    currentScreen !== "resources" &&
-    currentScreen !== "map";
+    currentScreen !== "resources";
 
   return (
     <IncidentProvider>
